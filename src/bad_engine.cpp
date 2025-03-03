@@ -145,18 +145,28 @@ void BAD_Engine::renderHovers()
                 SDL_SetRenderDrawColor(renderer, 255, 69, 0, 255);
                 SDL_RenderRect(renderer, &glow);
 
-                SDL_FRect box;
-                box.w = BOX_WIDTH;
-                box.h = BOX_HEIGHT;
+                SDL_FRect message, messageBox;
+                SDL_Surface* sf = TTF_RenderText_Blended(font, "Message", 0, {255,69,0,255});
+                SDL_Texture* tx = SDL_CreateTextureFromSurface(renderer, sf);
+                SDL_DestroySurface(sf);
 
-                box.y = day.rect.y + DAY_SIDE + 5;
-                if (box.y + BOX_HEIGHT > WINDOW_HEIGHT) box.y = day.rect.y - 5 - BOX_HEIGHT;
+                messageBox.w = BOX_WIDTH;
+                messageBox.h = BOX_HEIGHT;
+                messageBox.y = day.rect.y + DAY_SIDE + 5;
+                if (messageBox.y + BOX_HEIGHT > WINDOW_HEIGHT) messageBox.y = day.rect.y - 5 - BOX_HEIGHT;
+                messageBox.x = day.rect.x;
+                if (messageBox.x + BOX_WIDTH > WINDOW_WIDTH) messageBox.x = day.rect.x - BOX_WIDTH + DAY_SIDE;
 
-                box.x = day.rect.x;
-                if (box.x + BOX_WIDTH > WINDOW_WIDTH) box.x = day.rect.x - BOX_WIDTH + DAY_SIDE;
+                SDL_GetTextureSize(tx, &message.w, &message.h);
+                message.x = messageBox.x + ((float)BOX_WIDTH / 2) - (message.w / 2);
+                message.y = messageBox.y + ((float)BOX_HEIGHT / 2) - (message.y / 2);
 
+                SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+                SDL_RenderFillRect(renderer, &messageBox);
                 SDL_SetRenderDrawColor(renderer, 255, 69, 0, 255);
-                SDL_RenderRect(renderer, &box);
+                SDL_RenderRect(renderer, &messageBox);
+
+                SDL_RenderTexture(renderer, tx, nullptr, &message);
             }
         }
     }
