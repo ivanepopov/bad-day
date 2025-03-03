@@ -90,7 +90,8 @@ void BAD_Engine::mouseInput(const Uint8& button, SDL_FPoint& mousePosition)
 
 void BAD_Engine::loadYears()
 {
-    std::ifstream data(yearDataFile);
+    const auto dataPath = basePath / yearDataFile;
+    std::ifstream data(dataPath);
 
     std::string line;
     while (data >> line)
@@ -113,7 +114,9 @@ void BAD_Engine::loadYears()
 
 void BAD_Engine::saveYears()
 {
-    std::ofstream data(yearDataFile);
+    const auto dataPath = basePath / yearDataFile;
+    std::ofstream data(dataPath);
+
     for (const auto& [yr, y] : years)
     {
         data << yr << "\n";

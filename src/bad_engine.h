@@ -13,6 +13,7 @@ class BAD_Engine
         int currentYear;
         std::vector<Label> labels;
         std::unordered_map<int, Year> years;
+        std::filesystem::path basePath = "";
         std::string yearDataFile = "bad_day_data.txt";
 
     public:
@@ -20,13 +21,15 @@ class BAD_Engine
         void iterate();
         void quit();
 
-        SDL_Renderer* getRenderer() { return renderer; };
-        SDL_Window*   getWindow() { return window; };
-        TTF_Font*     getFont() { return font; };
+        SDL_Renderer*         getRenderer() { return renderer; };
+        SDL_Window*           getWindow() { return window; };
+        TTF_Font*             getFont() { return font; };
+        std::filesystem::path getBasePath() { return basePath; }
 
         void setRenderer(SDL_Renderer* renderer) { this->renderer = renderer; };
         void setWindow(SDL_Window* window) { this->window = window; };
         void setFont(TTF_Font* font) { this->font = font; };
+        void setBasePath(std::filesystem::path path) { basePath = path; }
 
         void renderLabels();
         void renderHovers();

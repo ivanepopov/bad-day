@@ -32,6 +32,14 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
         return SDL_APP_FAILURE;
     }
 
+#if __ANDROID__
+    bad.setBasePath("");
+#else
+    auto basePathPtr = SDL_GetBasePath();
+    if (!basePathPtr) { return SDL_APP_FAILURE; }
+    bad.setBasePath(basePathPtr);
+#endif
+
     font = TTF_OpenFontIO(SDL_IOFromConstMem(tiny_ttf, tiny_ttf_len), true, 18.0f);
     if (!font)
     {
