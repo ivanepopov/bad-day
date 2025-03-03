@@ -18,12 +18,12 @@ jobs:
           - name: Configure
             run: cmake -DCMAKE_SYSTEM_NAME=${{ matrix.target }} -DCMAKE_SYSTEM_VERSION="10.0" -A${{ matrix.arch }} -S . -B build
           - name: Build
-            run: cmake --build build --target sdl-min --config Release
+            run: cmake --build build --target bad-day --config Release
           - name: Upload Build
             uses: actions/upload-artifact@v4
             if: ${{ matrix.target != 'WindowsStore' }}
             with: 
-                name: sdl-min-${{ matrix.target }}-${{ matrix.arch }}
+                name: bad-day-${{ matrix.target }}-${{ matrix.arch }}
                 path: |
                     build/Release/*.exe
                     build/Release/*.dll
@@ -45,13 +45,13 @@ jobs:
           - name: Configure
             run: cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -S . -B build
           - name: Build
-            run: cmake --build build --target sdl-min --config Release
+            run: cmake --build build --target bad-day --config Release
           - name: Upload Build
             uses: actions/upload-artifact@v4
             with: 
-                name: sdl-min-Linux
+                name: bad-day-Linux
                 path: |
-                    build/Release/sdl-min
+                    build/Release/bad-day
                     build/Release/*.so
                     build/Release/*.ttf
                     build/Release/*.ogg
@@ -78,7 +78,7 @@ jobs:
           - name: Build
             run: cmake --build build --target install --config Release
           - name: Ad-Hoc Codesign
-            run: codesign -s - -f "./build/release/sdl-min.app" --deep
+            run: codesign -s - -f "./build/release/bad-day.app" --deep
           - name: Create DMG
             run: | 
                 cd build
@@ -86,5 +86,5 @@ jobs:
           - name: Upload Build
             uses: actions/upload-artifact@v4
             with: 
-                name: sdl-min-apple-${{ matrix.target }}
+                name: bad-day-apple-${{ matrix.target }}
                 path: build/*.dmg
