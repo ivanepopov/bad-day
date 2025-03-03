@@ -5,11 +5,11 @@ cmake_minimum_required(VERSION 3.16)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
 
-# prevent installing to system directories. 
+# prevent installing to system directories.
 set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}" CACHE INTERNAL "")
 
 # Declare the project
-project(sdl-min)
+project(bad-day)
 
 if ((APPLE AND NOT CMAKE_SYSTEM_NAME MATCHES "Darwin") OR EMSCRIPTEN)
     set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "")    # Disable shared builds on platforms where it does not make sense to use them
@@ -37,8 +37,8 @@ else()
 endif()
 
 # Add your sources to the target
-target_sources(${EXECUTABLE_NAME} 
-PRIVATE 
+target_sources(${EXECUTABLE_NAME}
+PRIVATE
     src/main.cpp
     src/iosLaunchScreen.storyboard
 )
@@ -46,7 +46,7 @@ PRIVATE
 # should show the user while the application is starting up. If you don't include one,
 # then you get placed in a compatibility mode that does not allow HighDPI.
 # This file is referenced inside Info.plist.in, where it is marked as the launch screen file.
-# It is also ignored on non-Apple platforms. 
+# It is also ignored on non-Apple platforms.
 
 # To get an app icon on Apple platforms, add it to your executable.
 # Afterward, the image file in Info.plist.in.
@@ -57,7 +57,7 @@ endif()
 # Set C++ version
 target_compile_features(${EXECUTABLE_NAME} PUBLIC cxx_std_20)
 
-# on Web targets, we need CMake to generate a HTML webpage. 
+# on Web targets, we need CMake to generate a HTML webpage.
 if(EMSCRIPTEN)
 	set(CMAKE_EXECUTABLE_SUFFIX ".html" CACHE INTERNAL "")
 endif()
@@ -69,12 +69,12 @@ add_subdirectory(SDL EXCLUDE_FROM_ALL)
 
 # If you don't want SDL_ttf, then remove this section.
 set(SDLTTF_VENDORED ON) # tell SDL_ttf to build its own dependencies
-add_subdirectory(SDL_ttf EXCLUDE_FROM_ALL)	
+add_subdirectory(SDL_ttf EXCLUDE_FROM_ALL)
 
 # SDL_mixer (used for playing audio)
 set(SDLMIXER_MIDI_NATIVE OFF)     # disable formats we don't use to make the build faster and smaller. Also some of these don't work on all platforms so you'll need to do some experimentation.
 set(SDLMIXER_GME OFF)
-set(SDLMIXER_WAVPACK OFF)     
+set(SDLMIXER_WAVPACK OFF)
 set(SDLMIXER_MOD OFF)
 set(SDLMIXER_OPUS OFF)
 set(SDLMIXER_VENDORED ON)   # tell SDL_mixer to build its own dependencies
@@ -88,12 +88,12 @@ set(SDLIMAGE_JPEG OFF)
 set(SDLIMAGE_WEBP OFF)
 add_subdirectory(SDL_image EXCLUDE_FROM_ALL)
 
-# Link SDL to our executable. This also makes its include directory available to us. 
-target_link_libraries(${EXECUTABLE_NAME} PUBLIC 
+# Link SDL to our executable. This also makes its include directory available to us.
+target_link_libraries(${EXECUTABLE_NAME} PUBLIC
 	SDL3_ttf::SDL3_ttf      # remove if you are not using SDL_ttf
 	SDL3_mixer::SDL3_mixer  # remove if you are not using SDL_mixer
 	SDL3_image::SDL3_image	# remove if you are not using SDL_image
-    SDL3::SDL3              # If using satelite libraries, SDL must be the last item in the list. 
+    SDL3::SDL3              # If using satelite libraries, SDL must be the last item in the list.
 )
 
 # SDL_Image bug: https://github.com/libsdl-org/SDL_image/issues/506
@@ -119,28 +119,24 @@ if (APPLE)
         target_sources(${EXECUTABLE_NAME} PRIVATE ${FILE})
         set_property(SOURCE ${FILE} PROPERTY MACOSX_PACKAGE_LOCATION "Resources/${relpath}")
     endmacro()
-    add_resource("${CMAKE_CURRENT_LIST_DIR}/src/Inter-VariableFont.ttf")
-    add_resource("${CMAKE_CURRENT_LIST_DIR}/src/the_entertainer.ogg")
-    add_resource("${CMAKE_CURRENT_LIST_DIR}/src/gs_tiger.svg")
+    # add_resource("${CMAKE_CURRENT_LIST_DIR}/src/xyz.mp3")
 elseif(EMSCRIPTEN)
     # on the web, we have to put the files inside of the webassembly
     # somewhat unintuitively, this is done via a linker argument.
-    target_link_libraries(${EXECUTABLE_NAME} PRIVATE 
-        "--preload-file \"${CMAKE_CURRENT_LIST_DIR}/src/Inter-VariableFont.ttf@/\""
-        "--preload-file \"${CMAKE_CURRENT_LIST_DIR}/src/the_entertainer.ogg@/\""
-        "--preload-file \"${CMAKE_CURRENT_LIST_DIR}/src/gs_tiger.svg@/\""
+    target_link_libraries(${EXECUTABLE_NAME} PRIVATE
+        # "--preload-file \"${CMAKE_CURRENT_LIST_DIR}/src/xyz.mp3@/\""
     )
 else()
     if (ANDROID)
         file(MAKE_DIRECTORY "${MOBILE_ASSETS_DIR}")    # we need to create the project Assets dir otherwise CMake won't copy our assets.
     endif()
 
-    
+
     macro(copy_helper filename)
         if (ANDROID)
-            # MOBILE_ASSETS_DIR is set in the gradle file via the cmake command line and points to the Android Studio Assets folder. 
-            # when we copy assets there, the Android build pipeline knows to add them to the apk. 
-            set(outname "${MOBILE_ASSETS_DIR}/${filename}")    
+            # MOBILE_ASSETS_DIR is set in the gradle file via the cmake command line and points to the Android Studio Assets folder.
+            # when we copy assets there, the Android build pipeline knows to add them to the apk.
+            set(outname "${MOBILE_ASSETS_DIR}/${filename}")
         else()
             # for platforms that do not have a good packaging format, all we can do is copy the assets to the process working directory.
             set(outname "${CMAKE_BINARY_DIR}/$<CONFIGURATION>/${filename}")
@@ -151,24 +147,22 @@ else()
 		    DEPENDS "${filename}"
 	    )
     endmacro()
-    copy_helper("Inter-VariableFont.ttf")
-    copy_helper("the_entertainer.ogg")
-    copy_helper("gs_tiger.svg")
+    # copy_helper("xyz.mp3")
 endif()
 
 # set some extra configs for each platform
-set_target_properties(${EXECUTABLE_NAME} PROPERTIES 
+set_target_properties(${EXECUTABLE_NAME} PROPERTIES
     # On macOS, make a proper .app bundle instead of a bare executable
     MACOSX_BUNDLE TRUE
     # Set the Info.plist file for Apple Mobile platforms. Without this file, your app
-    # will not launch. 
+    # will not launch.
     MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/src/Info.plist.in"
 
     # in Xcode, create a Scheme in the schemes dropdown for the app.
     XCODE_GENERATE_SCHEME TRUE
     # Identification for Xcode
-    XCODE_ATTRIBUTE_BUNDLE_IDENTIFIER "com.ravbug.sdl3-sample"
-	XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "com.ravbug.sdl3-sample"
+    XCODE_ATTRIBUTE_BUNDLE_IDENTIFIER "com.ivanepopov.bad-day"
+	XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "com.ivanepopov.bad-day"
 	XCODE_ATTRIBUTE_CURRENTYEAR "${CURRENTYEAR}"
 )
 
@@ -176,7 +170,7 @@ set_target_properties(${EXECUTABLE_NAME} PROPERTIES
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT "${EXECUTABLE_NAME}")
 
 # On macOS Platforms, ensure that the bundle is valid for distribution by calling fixup_bundle.
-# note that fixup_bundle does not work on iOS, so you will want to use static libraries 
+# note that fixup_bundle does not work on iOS, so you will want to use static libraries
 # or manually copy dylibs and set rpaths
 if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     # tell Install about the target, otherwise fixup won't know about the transitive dependencies
@@ -184,12 +178,12 @@ if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     	BUNDLE DESTINATION ./install COMPONENT Runtime
    	    RUNTIME DESTINATION ./install/bin COMPONENT Runtime
     )
-	
+
     set(DEP_DIR "${CMAKE_BINARY_DIR}")  # where to look for dependencies when fixing up
-    INSTALL(CODE 
+    INSTALL(CODE
         "include(BundleUtilities)
         fixup_bundle(\"$<TARGET_BUNDLE_DIR:${EXECUTABLE_NAME}>\" \"\" \"${DEP_DIR}\")
-        " 
+        "
     )
     set(CPACK_GENERATOR "DragNDrop")
     include(CPack)
