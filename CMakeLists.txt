@@ -115,7 +115,7 @@ if (APPLE)
     # SDL_GetBasePath() gives us easy access to that location.
     set(input_root "${CMAKE_CURRENT_LIST_DIR}/src")
     macro(add_resource FILE)
-        file(RELATIVE_PATH relpath "${input_root}" "${FILE}")
+        file(RELATIVE_PATH relpath "${input_root}" "${input_root}/${FILE}")
         get_filename_component(relpath "${relpath}" DIRECTORY)
         target_sources(${EXECUTABLE_NAME} PRIVATE ${FILE})
         set_property(SOURCE ${FILE} PROPERTY MACOSX_PACKAGE_LOCATION "Resources/${relpath}")
