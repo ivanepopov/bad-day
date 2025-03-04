@@ -36,6 +36,9 @@ static SDL_Color colors[3] =
 struct Label {
     SDL_Texture* texture;
     SDL_FRect rect;
+    SDL_Color color;
+    std::string info;
+    int hover = 0;
 };
 
 struct Message {

@@ -1,4 +1,5 @@
 #include "bad_engine.h"
+#include "globals.h"
 
 void BAD_Engine::init(SDL_Renderer* renderer, SDL_Window* window, TTF_Font* font)
 {
@@ -12,32 +13,15 @@ void BAD_Engine::init(SDL_Renderer* renderer, SDL_Window* window, TTF_Font* font
     localtime->tm_year += 1900;
     currentYear = localtime->tm_year;
 
-    /* load labels */
-    Label leftArrow, rightArrow;
-    SDL_Color color = { 255, 255, 255, SDL_ALPHA_OPAQUE };
-
-    SDL_Surface* ls = TTF_RenderText_Blended(font, "<",  0, color);
-    SDL_Surface* rs = TTF_RenderText_Blended(font, ">",  0, color);
-
-    leftArrow.texture = SDL_CreateTextureFromSurface(renderer, ls);
-    rightArrow.texture = SDL_CreateTextureFromSurface(renderer, rs);
-
-    SDL_DestroySurface(ls);
-    SDL_DestroySurface(rs);
-
-    SDL_GetTextureSize(leftArrow.texture, &leftArrow.rect.w, &leftArrow.rect.h);
-    leftArrow.rect.x = WINDOW_WIDTH - 95;
-    leftArrow.rect.y = WINDOW_HEIGHT - 25;
-
-    SDL_GetTextureSize(rightArrow.texture, &rightArrow.rect.w, &rightArrow.rect.h);
-    rightArrow.rect.x = WINDOW_WIDTH - 20;
-    rightArrow.rect.y = WINDOW_HEIGHT - 25;
+    /* create labels */
+    labels.push_back(createLabel("<", WINDOW_WIDTH - 95, WINDOW_HEIGHT - 25));
+    labels.push_back(createLabel(">", WINDOW_WIDTH - 20, WINDOW_HEIGHT - 25));
 
     loadYears();
 
-    /* TODO check if current year is loaded */
+    if (!years.count(currentYear)) years[currentYear] = createYear(currentYear);
 
-    years[localtime->tm_year].months[localtime->tm_mon].days[localtime->tm_mday].color = {255, 69, 0, 255};
+    /* TODO make current date glow */
 }
 
 void BAD_Engine::iterate()
@@ -72,20 +56,45 @@ void BAD_Engine::mouseInput(const Uint8& button, SDL_FPoint& mousePosition)
             day.hover = 0;
             if (SDL_PointInRectFloat(&mousePosition, &day.rect))
             {
+                day.hover = 1;
                 if (button == SDL_BUTTON_LEFT)
                 {
                     day.status++;
                     day.status %= 3;
                 }
-                else if (button == 0)
-                {
-                    day.hover = 1;
-                }
             }
         }
     }
 
-    /* TODO check if clicked on year arrow keys */
+    for (Label& label : labels)
+    {
+        label.hover = 0;
+        if (SDL_PointInRectFloat(&mousePosition, &label.rect))
+        {
+            label.hover = 1;
+            if (button == SDL_BUTTON_LEFT)
+            {
+                if (label.info == "<")
+                {
+                    if (currentYear == 0);
+                    else
+                    {
+                        currentYear--;
+                        if (!years.count(currentYear)) years[currentYear] = createYear(currentYear);
+                    }
+                }
+                else if (label.info == ">")
+                {
+                    if (currentYear == 9999);
+                    else
+                    {
+                        currentYear++;
+                        if (!years.count(currentYear)) years[currentYear] = createYear(currentYear);
+                    }
+                }
+            }
+        }
+    }
 }
 
 void BAD_Engine::loadYears()
@@ -147,6 +156,7 @@ void BAD_Engine::renderHovers()
                 SDL_RenderRect(renderer, &glow);
 
                 /* message box background */
+                if (day.status == 0) continue;
                 SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
                 SDL_RenderFillRect(renderer, &day.msg.bg);
 
@@ -159,13 +169,24 @@ void BAD_Engine::renderHovers()
             }
         }
     }
+
+    for (Label& label : labels)
+    {
+        if (label.hover)
+        {
+            /* the glow around the day square */
+            SDL_FRect glow{label.rect.x - 1, label.rect.y - 1, label.rect.w + 2, label.rect.h + 2};
+            SDL_SetRenderDrawColor(renderer, 255, 69, 0, 255);
+            SDL_RenderRect(renderer, &glow);
+        }
+    }
 }
 
 void BAD_Engine::renderLabels()
 {
     for (const Label& label : labels)
     {
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        SDL_SetRenderDrawColor(renderer, label.color.r, label.color.g, label.color.b, label.color.a);
         SDL_RenderTexture(renderer, label.texture, nullptr, &label.rect);
     }
 }
@@ -207,6 +228,23 @@ void BAD_Engine::renderYear(const Year& year)
     SDL_RenderTexture(renderer, year.label.texture, nullptr, &year.label.rect);
 
     for (const Month& month : year.months) renderMonth(month);
+}
+
+Label BAD_Engine::createLabel(std::string info, float x, float y, SDL_Color color)
+{
+    Label label;
+    label.info = info;
+    label.color = color;
+
+    SDL_Surface* sf = TTF_RenderText_Blended(font, info.c_str(), 0, color);
+    label.texture = SDL_CreateTextureFromSurface(renderer, sf);
+    SDL_DestroySurface(sf);
+
+    SDL_GetTextureSize(label.texture, &label.rect.w, &label.rect.h);
+    label.rect.x = x;
+    label.rect.y = y;
+
+    return label;
 }
 
 Day BAD_Engine::createDay(SDL_FPoint& start, float side, SDL_Color color)

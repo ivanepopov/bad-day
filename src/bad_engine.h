@@ -43,7 +43,8 @@ class BAD_Engine
         void loadYears();
         void saveYears();
 
-        Day   createDay(SDL_FPoint& start, float side, SDL_Color color = {0, 0, 0, SDL_ALPHA_OPAQUE});
+        Label createLabel(std::string info, float x, float y, SDL_Color color = {255, 255, 255, SDL_ALPHA_OPAQUE});
+        Day   createDay(SDL_FPoint& start, float side, SDL_Color color = {255, 255, 255, SDL_ALPHA_OPAQUE});
         Month createMonth(SDL_FPoint start, const std::string& month, int days, int iterate);
         Year  createYear(int year);
 
