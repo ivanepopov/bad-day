@@ -9,10 +9,13 @@ class BAD_Engine
         SDL_Renderer* renderer;
         SDL_Window* window;
         TTF_Font* font;
+
         std::tm* localtime;
         int currentYear;
+
         std::vector<Label> labels;
         std::unordered_map<int, Year> years;
+
         std::filesystem::path basePath = "";
         std::string yearDataFile = "bad_day_data.txt";
 

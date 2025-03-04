@@ -141,32 +141,21 @@ void BAD_Engine::renderHovers()
         {
             if (day.hover)
             {
+                /* the glow around the day square */
                 SDL_FRect glow{day.rect.x - 1, day.rect.y - 1, DAY_SIDE + 2, DAY_SIDE + 2};
                 SDL_SetRenderDrawColor(renderer, 255, 69, 0, 255);
                 SDL_RenderRect(renderer, &glow);
 
-                SDL_FRect message, messageBox;
-                SDL_Surface* sf = TTF_RenderText_Blended(font, "Message", 0, {255,69,0,255});
-                SDL_Texture* tx = SDL_CreateTextureFromSurface(renderer, sf);
-                SDL_DestroySurface(sf);
-
-                messageBox.w = BOX_WIDTH;
-                messageBox.h = BOX_HEIGHT;
-                messageBox.y = day.rect.y + DAY_SIDE + 5;
-                if (messageBox.y + BOX_HEIGHT > WINDOW_HEIGHT) messageBox.y = day.rect.y - 5 - BOX_HEIGHT;
-                messageBox.x = day.rect.x;
-                if (messageBox.x + BOX_WIDTH > WINDOW_WIDTH) messageBox.x = day.rect.x - BOX_WIDTH + DAY_SIDE;
-
-                SDL_GetTextureSize(tx, &message.w, &message.h);
-                message.x = messageBox.x + ((float)BOX_WIDTH / 2) - (message.w / 2);
-                message.y = messageBox.y + ((float)BOX_HEIGHT / 2) - (message.y / 2);
-
+                /* message box background */
                 SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-                SDL_RenderFillRect(renderer, &messageBox);
-                SDL_SetRenderDrawColor(renderer, 255, 69, 0, 255);
-                SDL_RenderRect(renderer, &messageBox);
+                SDL_RenderFillRect(renderer, &day.msg.bg);
 
-                SDL_RenderTexture(renderer, tx, nullptr, &message);
+                /* message box border */
+                SDL_SetRenderDrawColor(renderer, 255, 69, 0, 255);
+                SDL_RenderRect(renderer, &day.msg.bg);
+
+                /* message texture */
+                SDL_RenderTexture(renderer, day.msg.tx, nullptr, &day.msg.rect);
             }
         }
     }
@@ -233,6 +222,21 @@ Day BAD_Engine::createDay(SDL_FPoint& start, float side, SDL_Color color)
 
     day.rect = {start.x, start.y, side, side};
     day.color = color;
+
+    SDL_Surface* sf = TTF_RenderText_Blended(font, "Message", 0, {255,69,0,255});
+    day.msg.tx = SDL_CreateTextureFromSurface(renderer, sf);
+    SDL_DestroySurface(sf);
+
+    day.msg.bg.w = BOX_WIDTH;
+    day.msg.bg.h = BOX_HEIGHT;
+    day.msg.bg.y = day.rect.y + DAY_SIDE + 5;
+    if (day.msg.bg.y + BOX_HEIGHT > WINDOW_HEIGHT) day.msg.bg.y = day.rect.y - 5 - BOX_HEIGHT;
+    day.msg.bg.x = day.rect.x;
+    if (day.msg.bg.x + BOX_WIDTH > WINDOW_WIDTH) day.msg.bg.x = day.rect.x - BOX_WIDTH + DAY_SIDE;
+
+    SDL_GetTextureSize(day.msg.tx, &day.msg.rect.w, &day.msg.rect.h);
+    day.msg.rect.x = day.msg.bg.x + ((float)BOX_WIDTH / 2) - (day.msg.rect.w / 2);
+    day.msg.rect.y = day.msg.bg.y + ((float)BOX_HEIGHT / 2) - (day.msg.rect.h / 2);
 
     return day;
 }

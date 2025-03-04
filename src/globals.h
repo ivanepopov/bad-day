@@ -38,11 +38,17 @@ struct Label {
     SDL_FRect rect;
 };
 
+struct Message {
+    SDL_FRect rect, bg;
+    SDL_Texture* tx;
+};
+
 struct Day {
     SDL_FRect rect;
     SDL_Color color;
     int status = 0;
     int hover = 0;
+    Message msg;
 };
 
 struct Month {
