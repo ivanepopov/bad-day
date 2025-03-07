@@ -2,6 +2,7 @@
 #define BAD_ENGINE_H
 
 #include "globals.h"
+#include <deque>
 
 class BAD_Engine
 {
@@ -12,11 +13,13 @@ class BAD_Engine
 
         std::tm* localtime;
         int currentYear;
+        std::deque<Year> years;
+        int loadWidth = 5, loadIndex = -1;
 
         std::vector<Label> labels;
-        std::unordered_map<int, Year> years;
 
         std::filesystem::path basePath = "";
+        std::filesystem::path yearsPath = "";
         std::string yearDataFile = "bad_day_data.txt";
 
     public:
@@ -40,7 +43,11 @@ class BAD_Engine
         void renderMonth(const Month& month);
         void renderYear(const Year& year);
 
+        Year loadYear(int cy);
+        void saveYear(const Year& cy);
+
         void loadYears();
+        void unloadYears();
         void saveYears();
 
         Label createLabel(std::string info, float x, float y, SDL_Color color = {255, 255, 255, SDL_ALPHA_OPAQUE});

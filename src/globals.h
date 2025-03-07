@@ -60,6 +60,7 @@ struct Month {
 };
 
 struct Year {
+    int year;
     std::array<Month, 12> months;
     Label label;
 };

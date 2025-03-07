@@ -1,5 +1,6 @@
 #include "bad_engine.h"
 #include "globals.h"
+#include <string>
 
 void BAD_Engine::init(SDL_Renderer* renderer, SDL_Window* window, TTF_Font* font)
 {
@@ -17,9 +18,14 @@ void BAD_Engine::init(SDL_Renderer* renderer, SDL_Window* window, TTF_Font* font
     labels.push_back(createLabel("<", WINDOW_WIDTH - 95, WINDOW_HEIGHT - 25));
     labels.push_back(createLabel(">", WINDOW_WIDTH - 20, WINDOW_HEIGHT - 25));
 
-    loadYears();
+    yearsPath = basePath / "years";
+    if (!std::filesystem::exists(yearsPath) || !std::filesystem::is_directory(yearsPath))
+    {
+        std::filesystem::create_directories(yearsPath);
+    }
 
-    if (!years.count(currentYear)) years[currentYear] = createYear(currentYear);
+    years.push_back(loadYear(currentYear));
+    loadIndex++;
 
     /* TODO make current date glow */
 }
@@ -31,7 +37,7 @@ void BAD_Engine::iterate()
 
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
 
-    renderYear(years[currentYear]);
+    renderYear(years[loadIndex]);
     renderLabels();
     renderHovers();
 
@@ -49,7 +55,7 @@ void BAD_Engine::quit()
 
 void BAD_Engine::mouseInput(const Uint8& button, SDL_FPoint& mousePosition)
 {
-    for (Month& month : years[currentYear].months)
+    for (Month& month : years[loadIndex].months)
     {
         for (Day& day : month.days)
         {
@@ -80,7 +86,15 @@ void BAD_Engine::mouseInput(const Uint8& button, SDL_FPoint& mousePosition)
                     else
                     {
                         currentYear--;
-                        if (!years.count(currentYear)) years[currentYear] = createYear(currentYear);
+
+                        if (loadIndex > 0) loadIndex--;
+                        else years.push_front(loadYear(currentYear));
+
+                        if (years.size() > loadWidth)
+                        {
+                            saveYear(years.back());
+                            years.pop_back();
+                        }
                     }
                 }
                 else if (label.info == ">")
@@ -89,7 +103,19 @@ void BAD_Engine::mouseInput(const Uint8& button, SDL_FPoint& mousePosition)
                     else
                     {
                         currentYear++;
-                        if (!years.count(currentYear)) years[currentYear] = createYear(currentYear);
+
+                        loadIndex++;
+                        if (years.size() <= loadIndex)
+                        {
+                            years.push_back(loadYear(currentYear));
+                        }
+
+                        if (years.size() > loadWidth)
+                        {
+                            saveYear(years.front());
+                            years.pop_front();
+                            loadIndex--;
+                        }
                     }
                 }
             }
@@ -97,54 +123,53 @@ void BAD_Engine::mouseInput(const Uint8& button, SDL_FPoint& mousePosition)
     }
 }
 
-void BAD_Engine::loadYears()
+Year BAD_Engine::loadYear(int cy)
 {
-    const auto dataPath = basePath / yearDataFile;
+    Year y = createYear(cy);
+
+    std::string file = std::to_string(cy) + ".txt";
+    const auto dataPath = yearsPath / file;
+    if (!std::filesystem::exists(dataPath)) return y;
+
     std::ifstream data(dataPath);
-
     std::string line;
-    while (data >> line)
-    {
-        /* TODO error checking */
-        int yr = std::stoi(line);
-        Year y = createYear(yr);
 
-        for (int i = 0; i < 12; i++)
-        {
-            data >> line;
-            int m = std::stoi(line);
-            data >> line;
-            for (int j = 0; j < line.size(); j++) y.months[i].days[j].status = line[j] - '0';
-        }
-        years[yr] = y;
+    for (int i = 0; i < 12; i++)
+    {
+        data >> line;
+        for (int j = 0; j < line.size(); j++) y.months[i].days[j].status = line[j] - '0';
     }
+
+    data.close();
+    return y;
+}
+
+void BAD_Engine::saveYear(const Year& cy)
+{
+    std::string file = std::to_string(cy.year) + ".txt";
+    const auto dataPath = yearsPath / file;
+    std::ofstream data(dataPath);
+
+    for (int i = 0; i < 12; i++)
+    {
+        for (int j = 0; j < cy.months[i].days.size(); j++)
+        {
+            data << cy.months[i].days[j].status;
+        }
+        data << "\n";
+    }
+
     data.close();
 }
 
 void BAD_Engine::saveYears()
 {
-    const auto dataPath = basePath / yearDataFile;
-    std::ofstream data(dataPath);
-
-    for (const auto& [yr, y] : years)
-    {
-        data << yr << "\n";
-        for (int i = 0; i < 12; i++)
-        {
-            data << i << "\n";
-            for (int j = 0; j < y.months[i].days.size(); j++)
-            {
-                data << y.months[i].days[j].status;
-            }
-            data << "\n";
-        }
-    }
-    data.close();
+    for (const auto& y : years) saveYear(y);
 }
 
 void BAD_Engine::renderHovers()
 {
-    for (Month& month : years[currentYear].months)
+    for (Month& month : years[loadIndex].months)
     {
         for (Day& day : month.days)
         {
@@ -163,6 +188,8 @@ void BAD_Engine::renderHovers()
                 /* message box border */
                 SDL_SetRenderDrawColor(renderer, 255, 69, 0, 255);
                 SDL_RenderRect(renderer, &day.msg.bg);
+
+                /* create input text box */
 
                 /* message texture */
                 SDL_RenderTexture(renderer, day.msg.tx, nullptr, &day.msg.rect);
@@ -310,6 +337,7 @@ Month BAD_Engine::createMonth(SDL_FPoint start, const std::string& month, int da
 Year BAD_Engine::createYear(int year)
 {
     Year y;
+    y.year = year;
 
     SDL_Color color = { 255, 255, 255, SDL_ALPHA_OPAQUE };
     SDL_Surface* sf = TTF_RenderText_Blended(font, std::to_string(year).c_str(), 0, color);
